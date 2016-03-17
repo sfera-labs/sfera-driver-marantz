@@ -3,6 +3,8 @@
  */
 package cc.sferalabs.sfera.drivers.marantz;
 
+import java.util.Locale;
+
 import cc.sferalabs.sfera.io.comm.CommPortException;
 
 /**
@@ -113,10 +115,24 @@ public class MarantzZone {
 	}
 
 	/**
+	 * Sends a command to set the specified input source.
+	 * 
+	 * @param input
+	 *            the input source to set
+	 * @throws CommPortException
+	 *             if an error occurs
+	 */
+	public void setInput(String input) throws CommPortException {
+		String cmd = "Z" + num + input.toUpperCase(Locale.ENGLISH);
+		driver.sendCommand(cmd);
+	}
+
+	/**
 	 * Sends a sleep timer command with the specified number of minutes.
 	 * 
 	 * @param min
-	 *            number of minutes (from 1 to 120), a value of 0 sets the timer off
+	 *            number of minutes (from 1 to 120), a value of 0 sets the timer
+	 *            off
 	 * @throws CommPortException
 	 *             if an error occurs
 	 */

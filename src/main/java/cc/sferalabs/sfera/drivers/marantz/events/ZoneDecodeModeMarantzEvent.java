@@ -3,6 +3,8 @@
  */
 package cc.sferalabs.sfera.drivers.marantz.events;
 
+import java.util.Locale;
+
 import cc.sferalabs.sfera.drivers.marantz.Marantz;
 import cc.sferalabs.sfera.events.StringEvent;
 
@@ -21,7 +23,7 @@ public class ZoneDecodeModeMarantzEvent extends StringEvent implements MarantzEv
 	 * @param value
 	 */
 	public ZoneDecodeModeMarantzEvent(Marantz source, int zone, String value) {
-		super(source, "zone(" + zone + ").decodeMode", value.toLowerCase());
+		super(source, "zone(" + zone + ").decodeMode", value.toLowerCase(Locale.ENGLISH));
 	}
 
 }

@@ -3,8 +3,6 @@
  */
 package cc.sferalabs.sfera.drivers.marantz.events;
 
-import java.util.Locale;
-
 import cc.sferalabs.sfera.drivers.marantz.Marantz;
 import cc.sferalabs.sfera.events.StringEvent;
 
@@ -15,15 +13,15 @@ import cc.sferalabs.sfera.events.StringEvent;
  * @version 1.0.0
  *
  */
-public class ZoneInputMarantzEvent extends StringEvent implements MarantzEvent {
+public class TunerModeMarantzEvent extends StringEvent implements MarantzEvent {
 
 	/**
+	 * 
 	 * @param source
-	 * @param zone
 	 * @param value
 	 */
-	public ZoneInputMarantzEvent(Marantz source, int zone, String value) {
-		super(source, "zone(" + zone + ").input", value.toLowerCase(Locale.ENGLISH));
+	public TunerModeMarantzEvent(Marantz source, String value) {
+		super(source, "tuner.mode", value);
 	}
 
 }

@@ -9,23 +9,26 @@ import cc.sferalabs.sfera.io.comm.CommPortException;
 
 public class Marantz extends Driver {
 
-	private static final String PARAM_ADDR = "addr";
 	private final static long POLL_INTERVAL = 5 * 60000;
 
 	private static final MarantzCommand[] POLLING_CMDS = { new MarantzCommand("PW?"),
 			new MarantzCommand("ZM?"), new MarantzCommand("MV?"), new MarantzCommand("MU?"),
 			new MarantzCommand("SI?"), new MarantzCommand("SD?"), new MarantzCommand("DC?"),
 			new MarantzCommand("SV?"), new MarantzCommand("SLP?"), new MarantzCommand("MS?"),
-			new MarantzCommand("PSSWR ?"), new MarantzCommand("TFAN?"),
+			new MarantzCommand("PSSWR ?"), new MarantzCommand("TFAN?"), new MarantzCommand("TPAN?"),
 			new MarantzCommand("SSSMG ?"), new MarantzCommand("Z2?"), new MarantzCommand("Z2MU?"),
 			new MarantzCommand("Z2SLP?"), new MarantzCommand("Z3?"), new MarantzCommand("Z3MU?"),
 			new MarantzCommand("Z3SLP?") };
 
+	private final MarantzZone[] zones = { new MainMarantzZone(this), new MarantzZone(this, "2"),
+			new MarantzZone(this, "3") };
+
+	private final MarantzMenu menu = new MarantzMenu(this);
+	private final MarantzTuner tuner = new MarantzTuner(this);
+
 	private CommPort commPort;
 	boolean gotUpdate;
 	private int errCount = 0;
-	private MarantzZone[] zone = { new MainMarantzZone(this), new MarantzZone(this, "2"),
-			new MarantzZone(this, "3") };
 
 	/**
 	 * @param id
@@ -43,14 +46,18 @@ public class Marantz extends Driver {
 
 	@Override
 	protected boolean onInit(Configuration config) throws InterruptedException {
-		String addr = config.get(PARAM_ADDR, null);
-		if (addr == null) {
-			log.error("Param {} not specified in configuration", PARAM_ADDR);
-			return false;
+		String port = config.get("port", null);
+		if (port == null) {
+			port = config.get("host", null);
+			if (port == null) {
+				log.error("Specify parameter 'port' or 'host' in the driver configuration");
+				return false;
+			}
+			port += ":23";
 		}
 
 		try {
-			commPort = CommPort.open(addr);
+			commPort = CommPort.open(port);
 			commPort.setParams(9600, 8, CommPort.STOPBITS_1, CommPort.PARITY_NONE,
 					CommPort.FLOWCONTROL_NONE);
 			commPort.setListener(new MarantzCommPortListener(this));
@@ -107,7 +114,6 @@ public class Marantz extends Driver {
 
 	@Override
 	protected void onQuit() {
-		// TODO Auto-generated method stub
 		if (commPort != null) {
 			try {
 				commPort.close();
@@ -151,6 +157,24 @@ public class Marantz extends Driver {
 	 * @return the requested zone
 	 */
 	public MarantzZone zone(int num) {
-		return zone[num - 1];
+		return zones[num - 1];
+	}
+
+	/**
+	 * Returns the menu object.
+	 * 
+	 * @return the menu object
+	 */
+	public MarantzMenu getMenu() {
+		return menu;
+	}
+
+	/**
+	 * Returns the tuner object.
+	 * 
+	 * @return the tuner object
+	 */
+	public MarantzTuner getTuner() {
+		return tuner;
 	}
 }

@@ -3,6 +3,8 @@
  */
 package cc.sferalabs.sfera.drivers.marantz.events;
 
+import java.util.Locale;
+
 import cc.sferalabs.sfera.drivers.marantz.Marantz;
 import cc.sferalabs.sfera.events.StringEvent;
 
@@ -21,7 +23,7 @@ public class ZoneVideoSignalMarantzEvent extends StringEvent implements MarantzE
 	 * @param value
 	 */
 	public ZoneVideoSignalMarantzEvent(Marantz source, int zone, String value) {
-		super(source, "zone(" + zone + ").videoSignal", value.toLowerCase());
+		super(source, "zone(" + zone + ").videoSignal", value.toLowerCase(Locale.ENGLISH));
 	}
 
 }

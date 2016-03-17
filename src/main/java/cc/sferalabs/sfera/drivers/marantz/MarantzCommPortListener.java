@@ -5,6 +5,9 @@ package cc.sferalabs.sfera.drivers.marantz;
 
 import cc.sferalabs.sfera.drivers.marantz.events.MarantzEvent;
 import cc.sferalabs.sfera.drivers.marantz.events.OnMarantzEvent;
+import cc.sferalabs.sfera.drivers.marantz.events.TunerFrequencyMarantzEvent;
+import cc.sferalabs.sfera.drivers.marantz.events.TunerModeMarantzEvent;
+import cc.sferalabs.sfera.drivers.marantz.events.TunerPresetMarantzEvent;
 import cc.sferalabs.sfera.drivers.marantz.events.ZoneAudioInputMarantzEvent;
 import cc.sferalabs.sfera.drivers.marantz.events.ZoneDecodeModeMarantzEvent;
 import cc.sferalabs.sfera.drivers.marantz.events.ZoneInputMarantzEvent;
@@ -14,7 +17,6 @@ import cc.sferalabs.sfera.drivers.marantz.events.ZoneSleepMarantzEvent;
 import cc.sferalabs.sfera.drivers.marantz.events.ZoneSoundModeMarantzEvent;
 import cc.sferalabs.sfera.drivers.marantz.events.ZoneSubwooferMarantzEvent;
 import cc.sferalabs.sfera.drivers.marantz.events.ZoneSurroundModeMarantzEvent;
-import cc.sferalabs.sfera.drivers.marantz.events.ZoneTunerFrequencyMarantzEvent;
 import cc.sferalabs.sfera.drivers.marantz.events.ZoneVideoSignalMarantzEvent;
 import cc.sferalabs.sfera.drivers.marantz.events.ZoneVolumeMarantzEvent;
 import cc.sferalabs.sfera.events.Bus;
@@ -35,7 +37,7 @@ public class MarantzCommPortListener implements CommPortListener {
 	/**
 	 * 
 	 */
-	public MarantzCommPortListener(Marantz driver) {
+	MarantzCommPortListener(Marantz driver) {
 		this.driver = driver;
 	}
 
@@ -103,7 +105,7 @@ public class MarantzCommPortListener implements CommPortListener {
 			e = new ZoneVideoSignalMarantzEvent(driver, 1, prm);
 			break;
 
-		case "SL":
+		case "SL": // SLP
 			e = new ZoneSleepMarantzEvent(driver, 1, prm.substring(1));
 			break;
 
@@ -122,11 +124,26 @@ public class MarantzCommPortListener implements CommPortListener {
 		case "TF":
 			if (prm.startsWith("AN")) {
 				try {
-					e = new ZoneTunerFrequencyMarantzEvent(driver, 1, prm.substring(2));
+					e = new TunerFrequencyMarantzEvent(driver, prm.substring(2));
+					String mode;
+					if (((TunerFrequencyMarantzEvent) e).getValue().floatValue() > 500) {
+						mode = "am";
+					} else {
+						mode = "fm";
+					}
+					Bus.postIfChanged(new TunerModeMarantzEvent(driver, mode));
 				} catch (Exception ex) {
 					// there are other TFAN messages not documented
 					e = null;
 				}
+			} else {
+				e = null;
+			}
+			break;
+
+		case "TP":
+			if (prm.startsWith("AN")) {
+				e = new TunerPresetMarantzEvent(driver, prm.substring(2));
 			} else {
 				e = null;
 			}
@@ -146,17 +163,15 @@ public class MarantzCommPortListener implements CommPortListener {
 			int zone = Integer.parseInt(cmd.substring(1));
 			if (prm.equals("ON") || prm.equals("OFF")) {
 				e = new ZoneOnMarantzEvent(driver, zone, prm);
+			} else if (prm.startsWith("MU")) {
+				e = new ZoneMuteMarantzEvent(driver, zone, prm.substring(2));
+			} else if (prm.startsWith("SLP")) {
+				e = new ZoneSleepMarantzEvent(driver, zone, prm.substring(3));
 			} else {
 				try {
 					e = new ZoneVolumeMarantzEvent(driver, zone, prm);
 				} catch (NumberFormatException ex) {
-					if (prm.startsWith("MU")) {
-						e = new ZoneMuteMarantzEvent(driver, zone, prm.substring(2));
-					} else if (prm.startsWith("SLP")) {
-						e = new ZoneSleepMarantzEvent(driver, zone, prm.substring(3));
-					} else {
-						e = new ZoneInputMarantzEvent(driver, zone, prm);
-					}
+					e = new ZoneInputMarantzEvent(driver, zone, prm);
 				}
 			}
 			break;
