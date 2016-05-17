@@ -63,7 +63,7 @@ public class MarantzCommPortListener implements CommPortListener {
 	 * @param message
 	 */
 	private void processMessage(String message) {
-		driver.getLogger().debug("Processing message: {}", message);
+		driver.getLogger().debug("Processing message: {}", message.trim());
 		String cmd = message.substring(0, 2);
 		String prm = message.substring(2);
 		MarantzEvent e;

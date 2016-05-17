@@ -107,8 +107,10 @@ public class MarantzTuner {
 	}
 
 	/**
-	 * Sends a command to set the band to AM.
+	 * Sends a command to set the band to AM or FM.
 	 * 
+	 * @param mode
+	 *            "AM" or "FM"
 	 * @throws CommPortException
 	 *             if an error occurs
 	 */

@@ -67,8 +67,9 @@ public class MarantzZone {
 	 * Sends a command to set the volume to the specified value.
 	 * 
 	 * @param val
-	 *            value from 0 to 99.5 (the main zone accepts X.5 values, the
-	 *            other zones only integer values)
+	 *            value from 0 to 99.5 (the main zone accepts X.5 decimal
+	 *            values, other zones only integer values). Illegal values will
+	 *            be rounded to the closest valid one.
 	 * @throws CommPortException
 	 *             if an error occurs
 	 */
@@ -82,21 +83,48 @@ public class MarantzZone {
 	 * @return
 	 */
 	protected String volumeToString(float val) {
-		if (val < 0 || val > 99.5) {
-			throw new IllegalArgumentException("0 <= val <= 99.5");
+		if (val < 0) {
+			val = 0;
+		} else if (val > 99.5) {
+			val = 99.5f;
 		}
-		int v = (int) (val * 10);
+
+		int integer = (int) val;
+		int decimal = ((int) (val * 10)) % 10;
+
+		if (this instanceof MainMarantzZone) {
+			if (decimal != 5) {
+				if (decimal <= 2) {
+					decimal = 0;
+				} else if (decimal >= 8) {
+					decimal = 0;
+					if (integer < 99) {
+						integer++;
+					}
+				} else {
+					decimal = 5;
+				}
+			}
+		} else {
+			if (decimal < 5) {
+				decimal = 0;
+			} else if (decimal >= 5) {
+				decimal = 0;
+				if (integer < 99) {
+					integer++;
+				}
+			}
+		}
+
 		String vStr;
-		if (v < 10) {
-			vStr = "00";
-		} else if (v < 100) {
+		if (integer < 10) {
 			vStr = "0";
 		} else {
 			vStr = "";
 		}
-		vStr += v;
-		if (v % 10 == 0) {
-			vStr = vStr.substring(0, vStr.length() - 1);
+		vStr += integer;
+		if (decimal == 5) {
+			vStr += "5";
 		}
 		return vStr;
 	}
