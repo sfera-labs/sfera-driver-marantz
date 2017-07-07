@@ -106,7 +106,8 @@ public class Marantz extends Driver {
 		} catch (Exception e) {
 			log.debug("Loop error", e);
 			if (++errCount > 3) {
-				log.error("Too many communication errors");
+				errCount = 0;
+				log.error("Too many loop errors");
 				return false;
 			}
 		}

@@ -54,7 +54,8 @@ import cc.sferalabs.sfera.io.comm.CommPortListener;
 public class MarantzCommPortListener implements CommPortListener {
 
 	private final Marantz driver;
-	private StringBuilder message = new StringBuilder();;
+	private StringBuilder message = new StringBuilder();
+	private int errCount = 0;
 
 	/**
 	 * 
@@ -78,7 +79,12 @@ public class MarantzCommPortListener implements CommPortListener {
 
 	@Override
 	public void onError(Throwable t) {
-		driver.getLogger().warn("Communication error", t);
+		driver.getLogger().debug("Communication error", t);
+		if (++errCount > 3) {
+			errCount = 0;
+			driver.getLogger().error("Too many communication errors");
+			driver.quit();
+		}
 	}
 
 	/**
