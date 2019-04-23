@@ -87,23 +87,31 @@ public class Marantz extends Driver {
 			log.error("Error initializing communication", e);
 			return false;
 		}
+		
+		try {
+			poll();
+		} catch (CommPortException e) {
+			log.error("First polling failed", e);
+			return false;
+		}
 
-		return true;
+		return gotUpdate;
 	}
 
 	@Override
 	protected boolean loop() throws InterruptedException {
 		try {
-			for (MarantzCommand cmd : POLLING_CMDS) {
-				writeAndSleep(cmd);
-			}
-
 			if (gotUpdate) {
 				Thread.sleep(POLL_INTERVAL);
 			} else {
 				throw new Exception("No updates");
 			}
+			gotUpdate = false;
+			poll();
 		} catch (Exception e) {
+			if (e instanceof InterruptedException) {
+				throw (InterruptedException) e;
+			}
 			log.debug("Loop error", e);
 			if (++errCount > 3) {
 				errCount = 0;
@@ -112,6 +120,16 @@ public class Marantz extends Driver {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * @throws CommPortException
+	 * @throws InterruptedException
+	 */
+	private void poll() throws CommPortException, InterruptedException {
+		for (MarantzCommand cmd : POLLING_CMDS) {
+			writeAndSleep(cmd);
+		}
 	}
 
 	/**
