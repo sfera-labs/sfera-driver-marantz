@@ -33,10 +33,9 @@ public class Marantz extends Driver {
 
 	private final static long POLL_INTERVAL = 5 * 60000;
 
-	private static final MarantzCommand[] POLLING_CMDS = { new MarantzCommand("PW?"),
-			new MarantzCommand("ZM?"), new MarantzCommand("MV?"), new MarantzCommand("MU?"),
-			new MarantzCommand("SI?"), new MarantzCommand("SD?"), new MarantzCommand("DC?"),
-			new MarantzCommand("SV?"), new MarantzCommand("SLP?"), new MarantzCommand("MS?"),
+	private static final MarantzCommand[] POLLING_CMDS = { new MarantzCommand("PW?"), new MarantzCommand("ZM?"),
+			new MarantzCommand("MV?"), new MarantzCommand("MU?"), new MarantzCommand("SI?"), new MarantzCommand("SD?"),
+			new MarantzCommand("DC?"), new MarantzCommand("SV?"), new MarantzCommand("SLP?"), new MarantzCommand("MS?"),
 			new MarantzCommand("PSSWR ?"), new MarantzCommand("TFAN?"), new MarantzCommand("TPAN?"),
 			new MarantzCommand("SSSMG ?"), new MarantzCommand("Z2?"), new MarantzCommand("Z2MU?"),
 			new MarantzCommand("Z2SLP?"), new MarantzCommand("Z3?"), new MarantzCommand("Z3MU?"),
@@ -49,8 +48,11 @@ public class Marantz extends Driver {
 	private final MarantzTuner tuner = new MarantzTuner(this);
 
 	private CommPort commPort;
+	private MarantzCommPortListener listener;
+
 	boolean gotUpdate;
 	private int errCount = 0;
+	long lastPoll;
 
 	/**
 	 * @param id
@@ -79,15 +81,17 @@ public class Marantz extends Driver {
 		}
 
 		try {
+			listener = new MarantzCommPortListener(this);
 			commPort = CommPort.open(port);
-			commPort.setParams(9600, 8, CommPort.STOPBITS_1, CommPort.PARITY_NONE,
-					CommPort.FLOWCONTROL_NONE);
-			commPort.setListener(new MarantzCommPortListener(this));
+			commPort.setParams(9600, 8, CommPort.STOPBITS_1, CommPort.PARITY_NONE, CommPort.FLOWCONTROL_NONE);
+			commPort.setListener(listener);
 		} catch (CommPortException e) {
 			log.error("Error initializing communication", e);
 			return false;
 		}
-		
+
+		errCount = 0;
+
 		try {
 			poll();
 		} catch (CommPortException e) {
@@ -101,24 +105,41 @@ public class Marantz extends Driver {
 	@Override
 	protected boolean loop() throws InterruptedException {
 		try {
-			if (gotUpdate) {
-				Thread.sleep(POLL_INTERVAL);
-			} else {
-				throw new Exception("No updates");
+			if (!commPort.isOpen()) {
+				log.error("Connection closed");
+				return false;
 			}
-			gotUpdate = false;
-			poll();
+
+			if (errCount > 3) {
+				log.error("Too many loop errors");
+				return false;
+			}
+
+			if (listener.errCount > 3) {
+				log.error("Too many communication errors");
+				return false;
+			}
+
+			if (!gotUpdate) {
+				errCount++;
+				poll();
+			} else if (System.currentTimeMillis() >= lastPoll + POLL_INTERVAL) {
+				gotUpdate = false;
+				errCount = 0;
+				listener.errCount = 0;
+				poll();
+			}
+
+			Thread.sleep(4000);
+
 		} catch (Exception e) {
 			if (e instanceof InterruptedException) {
 				throw (InterruptedException) e;
 			}
 			log.debug("Loop error", e);
-			if (++errCount > 3) {
-				errCount = 0;
-				log.error("Too many loop errors");
-				return false;
-			}
+			errCount++;
 		}
+
 		return true;
 	}
 
@@ -130,6 +151,7 @@ public class Marantz extends Driver {
 		for (MarantzCommand cmd : POLLING_CMDS) {
 			writeAndSleep(cmd);
 		}
+		lastPoll = System.currentTimeMillis();
 	}
 
 	/**
@@ -149,8 +171,13 @@ public class Marantz extends Driver {
 	 */
 	private synchronized void write(MarantzCommand cmd) throws CommPortException {
 		log.debug("Writing: {}", cmd.text);
-		commPort.writeBytes(cmd.bytes);
-		commPort.writeByte(0x0D);
+		try {
+			commPort.writeBytes(cmd.bytes);
+			commPort.writeByte(0x0D);
+		} catch (CommPortException e) {
+			errCount++;
+			throw e;
+		}
 	}
 
 	@Override
@@ -173,6 +200,7 @@ public class Marantz extends Driver {
 	 *             if an error occurs
 	 */
 	public void sendCommand(String cmd) throws CommPortException {
+		gotUpdate = false;
 		write(new MarantzCommand(cmd));
 	}
 
