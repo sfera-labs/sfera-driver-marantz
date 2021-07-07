@@ -26,6 +26,7 @@
 package cc.sferalabs.sfera.drivers.marantz.events;
 
 import cc.sferalabs.sfera.drivers.marantz.Marantz;
+import cc.sferalabs.sfera.drivers.marantz.MarantzZone;
 import cc.sferalabs.sfera.events.NumberEvent;
 
 /**
@@ -35,7 +36,9 @@ import cc.sferalabs.sfera.events.NumberEvent;
  * @version 1.0.0
  *
  */
-public class ZoneSleepMarantzEvent extends NumberEvent implements MarantzEvent {
+public class ZoneSleepMarantzEvent extends NumberEvent implements MarantzZoneEvent {
+
+	private final MarantzZone zone;
 
 	/**
 	 * @param source
@@ -43,8 +46,13 @@ public class ZoneSleepMarantzEvent extends NumberEvent implements MarantzEvent {
 	 * @param value
 	 */
 	public ZoneSleepMarantzEvent(Marantz source, int zone, String value) {
-		super(source, "zone(" + zone + ").sleep",
-				value.equals("OFF") ? 0 : Integer.parseInt(value));
+		super(source, "zone(" + zone + ").sleep", value.equals("OFF") ? 0 : Integer.parseInt(value));
+		this.zone = source.zone(zone);
+	}
+
+	@Override
+	public MarantzZone getZone() {
+		return zone;
 	}
 
 }

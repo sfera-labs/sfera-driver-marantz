@@ -26,6 +26,7 @@
 package cc.sferalabs.sfera.drivers.marantz.events;
 
 import cc.sferalabs.sfera.drivers.marantz.Marantz;
+import cc.sferalabs.sfera.drivers.marantz.MarantzZone;
 import cc.sferalabs.sfera.events.BooleanEvent;
 
 /**
@@ -35,7 +36,9 @@ import cc.sferalabs.sfera.events.BooleanEvent;
  * @version 1.0.0
  *
  */
-public class ZoneSubwooferMarantzEvent extends BooleanEvent implements MarantzEvent {
+public class ZoneSubwooferMarantzEvent extends BooleanEvent implements MarantzZoneEvent {
+
+	private final MarantzZone zone;
 
 	/**
 	 * @param source
@@ -44,6 +47,12 @@ public class ZoneSubwooferMarantzEvent extends BooleanEvent implements MarantzEv
 	 */
 	public ZoneSubwooferMarantzEvent(Marantz source, int zone, String value) {
 		super(source, "zone(" + zone + ").subwoofer", value.equals("ON"));
+		this.zone = source.zone(zone);
+	}
+
+	@Override
+	public MarantzZone getZone() {
+		return zone;
 	}
 
 }

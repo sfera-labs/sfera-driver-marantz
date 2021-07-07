@@ -4,7 +4,7 @@
 
 	<groupId>cc.sferalabs.sfera.drivers</groupId>
 	<artifactId>marantz</artifactId>
-	<version>1.0.2</version>
+	<version>1.1.0</version>
 
 	<name>Marantz</name>
 	<description>Marantz AV receivers driver</description>
